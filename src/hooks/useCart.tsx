@@ -1,8 +1,7 @@
 import { createContext, ReactNode, useContext, useState } from 'react';
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
-// import { Product, Stock } from '../types';
-import { Product } from '../types'
+import { Product, Stock } from '../types';
 
 interface CartProviderProps {
   children: ReactNode;
@@ -36,7 +35,11 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
   const addProduct = async (productId: number) => {
     try {
       const item = cart.find(item => item.id === productId);
+
       if (item) {
+        const { data } = await api.get(`/stock/${productId}`);
+        const hasStock = item?.amount < data.amount;
+        if (!hasStock) throw new Error('qtd');
         item.amount += 1;
         const newItem = {
           productId: item.id,
@@ -58,7 +61,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         setCart(newCart);
         localStorage.setItem("@RocketShoes:cart", JSON.stringify(cart));
       }
-    } catch (err) {
+    } catch (err: any) {
       if (err.message === 'qtd') {
         toast.error('Quantidade solicitada fora de estoque');
       } else {
@@ -103,7 +106,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         localStorage.setItem("@RocketShoes:cart", JSON.stringify(newCart));
       }
 
-    } catch (err) {
+    } catch (err: any) {
       if (err.message === 'qtd')
         toast.error('Quantidade solicitada fora de estoque')
       else
